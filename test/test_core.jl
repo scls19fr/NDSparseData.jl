@@ -369,8 +369,8 @@ end
     @inferred Columns(@NT(c=[1]))
     @inferred Columns([1])
     @test_throws ErrorException @inferred Columns(c=[1]) # bad
-    @inferred NDSparse(Columns(c=[1]), [1])
-    @inferred NDSparse(Columns([1]), [1])
+    #@inferred NDSparse(Columns(c=[1]), [1])
+    #@inferred NDSparse(Columns([1]), [1])
     c = Columns([1,1,1,2,2], [1,2,4,3,5])
     d = Columns([1,1,2,2,2], [1,3,1,4,5])
     e = Columns([1,1,1], sort([rand(),0.5,rand()]))
