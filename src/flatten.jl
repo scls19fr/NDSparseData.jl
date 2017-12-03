@@ -196,7 +196,7 @@ x  a  b
 ```
 
 """
-function flatten(t::NextTable, col)
+function flatten(t::NextTable, col; pkey=nothing)
     vecvec = rows(t, col)
     everythingbut = excludecols(t, col)
 
@@ -223,5 +223,12 @@ function flatten(t::NextTable, col)
         insert!(cns, i, n)
         insert!(cols, i, c)
     end
-    table(cols...; names=cns)
+    if pkey === nothing
+        if all(p -> p in order_others, t.pkey)
+            pkey = t.pkey
+        else
+            pkey = []
+        end
+    end
+    table(cols...; names=cns, pkey=pkey)
 end
