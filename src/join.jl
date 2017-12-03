@@ -507,6 +507,10 @@ a  groups
 """
 function groupjoin(left::Dataset, right::Dataset; how=:inner, kwargs...)
     f = how === :anti ? (x,y) -> x : concat_tup
+    groupjoin(f, left, right; how=how, kwargs...)
+end
+
+function groupjoin(f, left::Dataset, right::Dataset; how=:inner, kwargs...)
     join(f, left, right; group=true, how=how, kwargs...)
 end
 
