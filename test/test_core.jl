@@ -868,6 +868,10 @@ end
         NDSparse(Columns([1]), ([1]))
     end
     @test t == NDSparse(Columns([1,2], [1,1]), [1,1])
+
+    x = NDSparse([1,1,1,2,2,2,3,3],[1,2,3,4,5,6,7,8],rand(8));
+    y = mapslices(t -> (1, 2), x, 2)
+    @test isa(y.data, Columns)
 end
 
 @testset "flatten" begin

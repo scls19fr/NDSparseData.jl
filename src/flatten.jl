@@ -64,10 +64,15 @@ function mapslices(f, x::NDSparse, dims; name = nothing)
             ns = nothing
         end
         index = Columns(iter[1:1].columns...; names=ns)
-        if name === nothing
-            output = NDSparse(index, [y])
+        if isa(y, Tup)
+            vec = convert(Columns, [y])
         else
-            output = NDSparse(index, Columns([y], names=[name]))
+            vec = [y]
+        end
+        if name === nothing
+            output = NDSparse(index, vec)
+        else
+            output = NDSparse(index, Columns(vec, names=[name]))
         end
         if isempty(dims)
             error("calling mapslices with no dimensions and scalar return value -- use map instead")
