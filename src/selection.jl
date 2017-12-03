@@ -343,7 +343,7 @@ julia> typeof(column(dropna(t,:x), :x))
 Array{Int64,1}
 ```
 """
-function dropna(t::Union{Columns, Dataset}, by=(colnames(t)...))
+function dropna(t::Dataset, by=(colnames(t)...))
     subtable(_nonna(t, by)...)
 end
 
