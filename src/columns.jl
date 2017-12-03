@@ -623,19 +623,22 @@ end
 
 function Base.pop!(d::ColDict, key=length(s.names))
     k = _colindex(d.names, key, 0)
+    local col
     if k == 0
         error("Column $key not found")
     else
+        col = d.columns[k]
         deleteat!(d.names, k)
         deleteat!(d.columns, k)
-        for (i, pk) in enumerate(d.pkey)
-            if pk == k
-                deleteat!(d.pkey, i)
-            elseif pk > k
-                d.pkey[i] -= 1 # moved left
+        idx = [pk[1] for pk in enumerate(d.pkey) if pk[2] == k]
+        deleteat!(d.pkey, idx)
+        for i in 1:length(d.pkey)
+            if d.pkey[i] > k
+                d.pkey[i] -= 1
             end
         end
     end
+    col
 end
 
 function rename!(d::ColDict, col, newname)
