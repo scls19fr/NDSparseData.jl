@@ -313,6 +313,9 @@ end
 Base.@pure function strip_unionall(T)
     if isleaftype(T) || T == Union{}
         return T
+    elseif isa(T, TypeVar)
+        T.lb === Union{} && return strip_unionall(T.ub)
+        return Any
     elseif T == Tuple
         return Any
     elseif T<:Tuple

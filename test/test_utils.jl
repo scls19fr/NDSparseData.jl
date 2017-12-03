@@ -60,4 +60,8 @@ let
     #101
     s = (1,)
     @test _promote_op(i -> Tuple(getfield(i, j) for j in s), Tuple{Int}) == Any
+
+    # 97
+    x = ndsparse(@NT(t=[0.01, 0.05]), @NT(x=[1,2], y=[3,4]))
+    @test map(p->@NT(r = sum(p)), x).data == Columns([4,6], names=[:r])
 end

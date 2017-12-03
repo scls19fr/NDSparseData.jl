@@ -327,7 +327,7 @@ function Base.getindex(d::ColDict{<:AbstractIndexedTable})
     table(d.columns...; names=d.names, pkey=d.pkey)
 end
 
-subtable(t::NextTable, r) = t[r]
+subtable(t::Union{Columns, NextTable}, r) = t[r]
 
 function primaryperm(t::NextTable)
     Perm(t.pkey, Base.OneTo(length(t)))
