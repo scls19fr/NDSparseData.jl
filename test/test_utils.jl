@@ -56,4 +56,8 @@ let
 
     h = x -> rand(Bool) ? @NT(x=1) : @NT(y=2)
     @test _promote_op(h, Int) == NamedTuple
+
+    #101
+    s = (1,)
+    @test _promote_op(i -> Tuple(getfield(i, j) for j in s), Tuple{Int}) == Any
 end

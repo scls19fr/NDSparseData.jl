@@ -313,6 +313,8 @@ end
 Base.@pure function strip_unionall(T)
     if isleaftype(T) || T == Union{}
         return T
+    elseif T == Tuple
+        return Any
     elseif T<:Tuple
         if any(x->x <: Vararg, T.parameters)
             # we only keep known-length tuples
