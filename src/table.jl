@@ -422,6 +422,21 @@ end
 
 Base.values(t::NextTable) = rows(t)
 
+sort(t::NextTable, by...; select = Tuple(colnames(t)), kwargs...) =
+    table(rows(t, select)[sortperm(rows(t, by...); kwargs...)], copy = false)
+
+function sort!(t::NextTable; kwargs...)
+    isempty(t.pkey) || error("Tables with primary keys can't be sorted in place")
+    sort!(rows(t); kwargs...)
+    t
+end
+
+function sort!(t::NextTable, by; kwargs...)
+    isempty(t.pkey) || error("Tables with primary keys can't be sorted in place")
+    Base.permute!!(rows(t), sortperm(rows(t, by); kwargs...))
+    t
+end
+
 """
     excludecols(itr, cols)
 
