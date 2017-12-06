@@ -2,7 +2,7 @@ using Base.Test
 using IndexedTables
 using PooledArrays
 using NamedTuples
-using DataVales
+using DataValues
 import IndexedTables: update!, pkeynames, pkeys, excludecols, sortpermby, primaryperm, best_perm_estimate
 
 let c = Columns([1,1,1,2,2], [1,2,4,3,5]),
