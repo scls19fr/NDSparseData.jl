@@ -51,7 +51,7 @@ end
     end
 end
 
-function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, lout, rout,
+function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, ks, lout, rout,
                           lnull, rnull, lkey, rkey, ldata, rdata, lperm, rperm, init_group, accumulate)
 
     ll, rr = length(lkey), length(rkey)
@@ -62,7 +62,7 @@ function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, lout, rout,
         c = rowcmp(lkey, lperm[i], rkey, rperm[j])
         if c < 0
             if typ === :outer || typ === :left || typ === :anti
-                push!(I, lkey[lperm[i]])
+                push!(I, ks[lperm[i]])
                 if grp
                     # empty group
                     push!(data, init_group())
@@ -86,7 +86,7 @@ function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, lout, rout,
                 if !grp
                     for x=i:i1
                         for y=j:j1
-                            push!(I, lkey[lperm[x]])
+                            push!(I, ks[lperm[x]])
                             # optimized push! method for concat_tup
                             _push!(Val{:both}(), f, data,
                                    lout, rout, ldata, rdata,
@@ -94,7 +94,7 @@ function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, lout, rout,
                         end
                     end
                 else
-                    push!(I, lkey[lperm[i]])
+                    push!(I, ks[lperm[i]])
                     group = init_group()
                     for x=i:i1
                         for y=j:j1
@@ -124,7 +124,7 @@ function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, lout, rout,
     # finish up
     if typ !== :inner
         if (typ === :outer || typ === :left || typ === :anti) && i <= ll
-            append!(I, lkey[lperm[i:ll]])
+            append!(I, ks[lperm[i:ll]])
             if grp
                 # empty group
                 append!(data, map(x->init_group(), i:ll))
@@ -149,7 +149,7 @@ nullrow(t::Type{<:Tuple}) = tuple(map(x->x(), [t.parameters...])...)
 nullrow(t::Type{<:NamedTuple}) = t(map(x->x(), [t.parameters...])...)
 nullrow(t::Type{<:DataValue}) = t()
 
-function init_join_output(typ, grp, f, ldata, rdata, lkey, rkey, init_group, accumulate)
+function init_join_output(typ, grp, f, ldata, rdata, left, keepkeys, lkey, rkey, init_group, accumulate)
     lnull = nothing
     rnull = nothing
     loutput = nothing
@@ -208,7 +208,13 @@ function init_join_output(typ, grp, f, ldata, rdata, lkey, rkey, init_group, acc
         guess = length(lkey)
     end
 
-    _sizehint!(similar(lkey,0), guess), _sizehint!(data, guess), loutput, routput, lnull, rnull, init_group, accumulate
+    if keepkeys
+        ks = pkeys(left)
+    else
+        ks = lkey
+    end
+
+    _sizehint!(similar(ks,0), guess), _sizehint!(data, guess), ks, loutput, routput, lnull, rnull, init_group, accumulate
 end
 
 """
@@ -367,6 +373,7 @@ function Base.join(f, left::Dataset, right::Dataset;
                    rselect=isa(right, NDSparse) ?
                        valuenames(right) : excludecols(right, lkey),
                    name = nothing,
+                   keepkeys=false, # defaults to keeping the keys for only the joined columns
                    init_group=nothing,
                    accumulate=nothing,
                    cache=true)
@@ -396,12 +403,15 @@ function Base.join(f, left::Dataset, right::Dataset;
 
     ldata = rows(left, lselect)
     rdata = rows(right, rselect)
+    if !isa(left, NDSparse) && keepkeys
+        error("`keepkeys=true` only works while joining NDSparse type")
+    end
 
     typ, grp = Val{how}(), Val{group}()
-    I, data, lout, rout, lnull, rnull, init_group, accumulate =
-        init_join_output(typ, grp, f, ldata, rdata, lkey, rkey, init_group, accumulate)
+    I, data, ks, lout, rout, lnull, rnull, init_group, accumulate =
+        init_join_output(typ, grp, f, ldata, rdata, left, keepkeys, lkey, rkey, init_group, accumulate)
 
-    _join!(typ, grp, f, I, data, lout, rout, lnull, rnull,
+    _join!(typ, grp, f, I, data, ks, lout, rout, lnull, rnull,
            lkey, rkey, ldata, rdata, lperm, rperm, init_group, accumulate)
 
     if group && left isa NextTable && !(data isa Columns)
