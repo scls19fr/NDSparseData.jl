@@ -124,7 +124,7 @@ function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, lout, rout,
     # finish up
     if typ !== :inner
         if (typ === :outer || typ === :left || typ === :anti) && i <= ll
-            append!(I, lkey[i:ll])
+            append!(I, lkey[lperm[i:ll]])
             if grp
                 # empty group
                 append!(data, map(x->init_group(), i:ll))
@@ -133,7 +133,7 @@ function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, lout, rout,
                        ldata, rdata, lperm[i:ll], 0, lnull, rnull)
             end
         elseif typ === :outer && j <= rr
-            append!(I, rkey[j:rr])
+            append!(I, rkey[rperm[j:rr]])
             if grp
                 # empty group
                 append!(data, map(x->init_group(), j:rr))

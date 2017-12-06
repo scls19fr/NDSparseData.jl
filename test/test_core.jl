@@ -2,6 +2,7 @@ using Base.Test
 using IndexedTables
 using PooledArrays
 using NamedTuples
+using DataVales
 import IndexedTables: update!, pkeynames, pkeys, excludecols, sortpermby, primaryperm, best_perm_estimate
 
 let c = Columns([1,1,1,2,2], [1,2,4,3,5]),
@@ -544,6 +545,10 @@ end
     r1 = table([2, 2, 3, 3], [5, 6, 7, 8], names=[:x, :z])
     @test join(l1, r1, lkey=:x, rkey=:x) == table([2, 2, 2, 2, 3, 3], [2, 2, 3, 3, 4, 4], [5, 6, 5, 6, 7, 8], names=Symbol[:x, :y, :z])
     @test join(l, r, lkey=:a, rkey=:a, lselect=:b, rselect=:d, how=:outer) == table([0, 1, 1, 1, 1, 2, 2, 3], DataValueArray([NA, 1, 1, 2, 2, 1, 2, NA]), DataValueArray([1, 2, 3, 2, 3, NA, NA, 4]), names=Symbol[:a, :b, :d])
+
+
+    t = table(["a","b","c","a"], [1,2,3,4]); t1 = table(["a","b"], [1,2])
+    @test leftjoin(t,t1,lkey=1,rkey=1) == table(["a","a","b","c"], [1,4,2,3], [1,1,2,NA])
 
     t1 = table([1,2,3,4], [5,6,7,8], pkey=[1])
     t2 = table([0,3,4,5], [5,6,7,8], pkey=[1])
