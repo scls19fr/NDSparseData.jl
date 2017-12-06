@@ -422,18 +422,59 @@ end
 
 Base.values(t::NextTable) = rows(t)
 
-sort(t::NextTable, by...; select = Tuple(colnames(t)), kwargs...) =
+"""
+`sort(t[, by::Selection]; select::Selection, kwargs...)`
+
+Sort rows by `by`. All of `Base.sort` keywords can be used.
+
+# Examples
+
+```jldoctest sort
+julia> t=table([1,1,1,2,2,2], [1,1,2,2,1,1], [1,2,3,4,5,6],
+names=[:x,:y,:z]);
+
+julia> sort(t, :z; select = (:y, :z), rev = true)
+Table with 6 rows, 2 columns:
+y  z
+────
+1  6
+1  5
+2  4
+2  3
+1  2
+1  1
+```
+"""
+sort(t::NextTable, by...; select = valuenames(t), kwargs...) =
     table(rows(t, select)[sortperm(rows(t, by...); kwargs...)], copy = false)
 
-function sort!(t::NextTable; kwargs...)
-    isempty(t.pkey) || error("Tables with primary keys can't be sorted in place")
-    sort!(rows(t); kwargs...)
-    t
-end
+"""
+`sort!(t[, by::Selection]; kwargs...)`
 
-function sort!(t::NextTable, by; kwargs...)
+Sort rows by `by` in place. All of `Base.sort` keywords can be used.
+
+# Examples
+
+```jldoctest sort!
+julia> t=table([1,1,1,2,2,2], [1,1,2,2,1,1], [1,2,3,4,5,6],
+names=[:x,:y,:z]);
+
+julia> sort!(t, :z, rev = true);
+
+julia> t
+Table with 6 rows, 3 columns:
+x  y  z
+───────
+2  1  6
+2  1  5
+2  2  4
+1  2  3
+1  1  2
+1  1  1
+"""
+function sort!(t::NextTable, by...; kwargs...)
     isempty(t.pkey) || error("Tables with primary keys can't be sorted in place")
-    Base.permute!!(rows(t), sortperm(rows(t, by); kwargs...))
+    permute!(rows(t), sortperm(rows(t, by...); kwargs...))
     t
 end
 
