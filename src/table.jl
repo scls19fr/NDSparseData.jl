@@ -423,6 +423,62 @@ end
 Base.values(t::NextTable) = rows(t)
 
 """
+`sort(t[, by::Selection]; select::Selection, kwargs...)`
+
+Sort rows by `by`. All of `Base.sort` keywords can be used.
+
+# Examples
+
+```jldoctest sort
+julia> t=table([1,1,1,2,2,2], [1,1,2,2,1,1], [1,2,3,4,5,6],
+names=[:x,:y,:z]);
+
+julia> sort(t, :z; select = (:y, :z), rev = true)
+Table with 6 rows, 2 columns:
+y  z
+────
+1  6
+1  5
+2  4
+2  3
+1  2
+1  1
+```
+"""
+sort(t::NextTable, by...; select = valuenames(t), kwargs...) =
+    table(rows(t, select)[sortperm(rows(t, by...); kwargs...)], copy = false)
+
+"""
+`sort!(t[, by::Selection]; kwargs...)`
+
+Sort rows by `by` in place. All of `Base.sort` keywords can be used.
+
+# Examples
+
+```jldoctest sort!
+julia> t=table([1,1,1,2,2,2], [1,1,2,2,1,1], [1,2,3,4,5,6],
+names=[:x,:y,:z]);
+
+julia> sort!(t, :z, rev = true);
+
+julia> t
+Table with 6 rows, 3 columns:
+x  y  z
+───────
+2  1  6
+2  1  5
+2  2  4
+1  2  3
+1  1  2
+1  1  1
+"""
+function sort!(t::NextTable, by...; kwargs...)
+    isempty(t.pkey) || error("Tables with primary keys can't be sorted in place")
+    permute!(rows(t), sortperm(rows(t, by...); kwargs...))
+    t
+end
+
+"""
     excludecols(itr, cols)
 
 Names of all columns in `itr` except `cols`. `itr` can be any of
