@@ -30,7 +30,7 @@ struct NextTable{C<:Columns} <: AbstractIndexedTable
     # store what percent of the data in each column is unique
     cardinality::Vector{Nullable{Float64}}
 
-    columns_buffer::C
+    columns_buffer::Union{C, Void}
 end
 
 """
@@ -288,6 +288,16 @@ Base.:(==)(a::NextTable, b::NextTable) = rows(a) == rows(b)
 Base.getindex(t::NextTable, i::Integer) = getindex(t.columns, i)
 Base.getindex(t::NextTable, i::Colon) = copy(t)
 Base.endof(t::NextTable) = length(t)
+
+function Base.view(t::NextTable, I)
+    issorted(I) || throw(ArgumentError("`view` called with unsorted index."))
+    NextTable(
+        view(t.columns, I),
+        t.pkey,
+        Perm[],
+        fill(Nullable{Float64}(), length(t.columns)),
+        nothing)
+end
 
 Base.length(t::NextTable) = length(t.columns)
 Base.start(t::NextTable) = start(t.columns)

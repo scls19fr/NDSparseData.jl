@@ -2,7 +2,7 @@ using Compat
 
 import Base:
     linearindexing, push!, size, sort, sort!, permute!, issorted, sortperm,
-    summary, resize!, vcat, serialize, deserialize, append!, copy!
+    summary, resize!, vcat, serialize, deserialize, append!, copy!, view
 
 export Columns, colnames, ncols, ColDict, insertafter!, insertbefore!, @cols, setcol, pushcol, popcol, insertcol, insertcolafter, insertcolbefore, renamecol
 
@@ -186,8 +186,17 @@ Base.IndexStyle(::Type{<:Columns}) = IndexLinear()
 summary(c::Columns{D}) where {D<:Tuple} = "$(length(c))-element Columns{$D}"
 
 empty!(c::Columns) = (foreach(empty!, c.columns); c)
-similar(c::Columns{D,C}) where {D,C} = Columns{D,C}(map(similar, c.columns))
-similar(c::Columns{D,C}, n::Integer) where {D,C} = Columns{D,C}(map(a->similar(a,n), c.columns))
+
+function similar(c::Columns{D,C}) where {D,C}
+    cols = map(similar, c.columns)
+    Columns{D,typeof(cols)}(cols)
+end
+
+function similar(c::Columns{D,C}, n::Integer) where {D,C} 
+    cols = map(a->similar(a,n), c.columns)
+    Columns{D,typeof(cols)}(cols)
+end
+
 function Base.similar{T<:Columns}(::Type{T}, n::Int)::T
     T_cols = T.parameters[2]
     f = T_cols <: Tuple ? tuple : T_cols
@@ -209,6 +218,8 @@ getindex(c::Columns{D}, i::Integer) where {D<:Tuple} = ith_all(i, c.columns)
 getindex(c::Columns{D}, i::Integer) where {D<:NamedTuple} = D(ith_all(i, c.columns)...)
 
 getindex(c::Columns, p::AbstractVector) = Columns(map(c->c[p], c.columns))
+
+view(c::Columns, I) = Columns(map(a->view(a, I), c.columns))
 
 @inline setindex!(I::Columns, r::Tup, i::Integer) = (foreach((c,v)->(c[i]=v), I.columns, r); I)
 
