@@ -51,7 +51,7 @@ end
     end
 end
 
-function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, ks, lout, rout,
+function _join!{typ, grp, keepkeys}(::Val{typ}, ::Val{grp}, ::Val{keepkeys}, f, I, data, ks, lout, rout,
                           lnull, rnull, lkey, rkey, ldata, rdata, lperm, rperm, init_group, accumulate)
 
     ll, rr = length(lkey), length(rkey)
@@ -74,10 +74,20 @@ function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, ks, lout, rout,
             i += 1
         elseif c==0
             # Join the elements that are equal at once
+            @label nextgroup
             i1 = i
             j1 = j
-            while i1 < ll && rowcmp(lkey, lperm[i1], lkey, lperm[i1+1]) == 0
-                i1 += 1
+            if grp && keepkeys
+                # While grouping with keepkeys we want to make sure we create
+                # one group for every unique key in the output index. Hence we may
+                # need to join on smaller groups
+                while i1 < ll && rowcmp(ks, lperm[i1], ks, lperm[i1+1]) == 0
+                    i1 += 1
+                end
+            else
+                while i1 < ll && rowcmp(lkey, lperm[i1], lkey, lperm[i1+1]) == 0
+                    i1 += 1
+                end
             end
             while j1 < rr && rowcmp(rkey, rperm[j1], rkey, rperm[j1+1]) == 0
                 j1 += 1
@@ -102,6 +112,12 @@ function _join!{typ, grp}(::Val{typ}, ::Val{grp}, f, I, data, ks, lout, rout,
                         end
                     end
                     push!(data, group)
+                    if keepkeys && i1+1 <= ll && rowcmp(lkey, lperm[i1], lkey, lperm[i1+1]) == 0
+                        # This means that the next key on the left is equal in the lkey sense
+                        # but different in the unique-key sense, so we start to make a new block again
+                        i = i1 + 1
+                        @goto nextgroup
+                    end
                 end
             end
             i = i1 + 1
@@ -411,7 +427,7 @@ function Base.join(f, left::Dataset, right::Dataset;
     I, data, ks, lout, rout, lnull, rnull, init_group, accumulate =
         init_join_output(typ, grp, f, ldata, rdata, left, keepkeys, lkey, rkey, init_group, accumulate)
 
-    _join!(typ, grp, f, I, data, ks, lout, rout, lnull, rnull,
+    _join!(typ, grp, Val{keepkeys}(), f, I, data, ks, lout, rout, lnull, rnull,
            lkey, rkey, ldata, rdata, lperm, rperm, init_group, accumulate)
 
     if group && left isa NextTable && !(data isa Columns)
