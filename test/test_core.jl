@@ -2,7 +2,7 @@ using Base.Test
 using IndexedTables
 using PooledArrays
 using NamedTuples
-using DataVales
+using DataValues
 import IndexedTables: update!, pkeynames, pkeys, excludecols, sortpermby, primaryperm, best_perm_estimate
 
 let c = Columns([1,1,1,2,2], [1,2,4,3,5]),
@@ -421,6 +421,15 @@ end
     @test best_perm_estimate(perms, [3,1]) == (0, nothing)
 end
 
+@testset "sort" begin
+    t = table(collect(1:10), collect(10:-1:1), names = [:x, :y])
+    @test columns(sort(t, rev = true), :x) == collect(10:-1:1)
+    @test columns(sort(t, :y), :y) == collect(1:10)
+    sort!(t)
+    @test columns(t, :x) == collect(1:10)
+    sort!(t, :y)
+    @test columns(t, :y) == collect(1:10)
+end
 
 @testset "reindex" begin
     t = table([2, 1], [1, 3], [4, 5], names=[:x, :y, :z], pkey=(1, 2))
