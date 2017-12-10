@@ -282,9 +282,6 @@ end
 sort!(c::Columns) = permute!(c, sortperm(c))
 sort(c::Columns) = c[sortperm(c)]
 
-map(p::ProjFn, c::Columns) = Columns(p(c.columns))
-map(p::Proj, c::Columns) = p(c.columns)
-
 function Base.vcat(c::Columns, cs::Columns...)
     fns = map(fieldnames, (map(x->x.columns, (c, cs...))))
     f1 = fns[1]

@@ -493,12 +493,6 @@ function map(f, x::NDSparse; select=x.data)
              presorted=true, copy=false)
 end
 
-# lift projection on arrays of structs
-map(p::Proj, x::NDSparse{T,D,C,V}) where {T,D<:Tuple,C<:Tup,V<:Columns} =
-    NDSparse(x.index, p(x.data.columns), presorted=true)
-
-(p::Proj)(x::NDSparse) = map(p, x)
-
 # """
 # `columns(x::NDSparse, names...)`
 #

@@ -2,7 +2,7 @@ using Base.Test
 import Base: tuple_type_cons, tuple_type_head, tuple_type_tail, in, ==, isless, convert,
              length, eltype, start, next, done, show
 
-export @pick, pick, @NT
+export @NT
 
 eltypes(::Type{Tuple{}}) = Tuple{}
 eltypes{T<:Tuple}(::Type{T}) =
@@ -58,60 +58,6 @@ astuple(t::Tuple) = t
 @generated function astuple(n::NamedTuple)
     Expr(:tuple, [ Expr(:., :n, Expr(:quote, fieldname(n,f))) for f = 1:nfields(n) ]...)
 end
-
-# family of projection functions
-
-struct ProjFn{F}
-    f::F
-end
-
-(p::ProjFn)(x::Tup) = p.f(x)
-
-struct Proj{f} end
-
-function (p::Proj{f})(x::Tup) where f
-    getfield(x, f)
-end
-
-"""
-    @pick(fields...)
-
-Returns a callable object `f` such that `f(x::Tuple)` returns a `Tuple` with only
-elements of index specified by `fields`, `f(x::NamedTuple)` return a `Tuple` if
-`fields` are integers, or a `NamedTuple` if `fields` are symbols with only the specified
-fields in the output.
-
-The callable is specialized to work efficiently on `Columns` by calling it once
-on `.columns` field to get the equivalent result.
-
-Calling `map` on an `NDSparse` with a `@pick` callable will run the callable on
-the data columns.
-
-# Examples
-    c = Columns(x=[1], y=[2.0])
-    @pick(2)(c) == Columns([2.0])
-    @pick(y)(c) == Columns(y=[2.0])
-    @pick(2,1)(c) == Columns([2.0], [1])
-    @pick(y,x)(c) == Columns(y=[2.0], x=[1])
-
-    t = NDSparse([1], c)
-    map(@pick(y, x), t) == IndexedTables([1], Columns(y=[2.0], x=[1]))
-"""
-macro pick(ex...)
-    tup = if all([isa(x, Symbol) for x in ex])
-        # Named tuple
-        args = [:(getfield(x, $(Expr(:quote, f)))) for f in ex]
-        T = Expr(:macrocall,
-                 :(NamedTuples.$(Symbol("@NT"))),
-                   map((x) -> :($(esc(x))), ex)...)
-        :($T($(args...)))
-    else
-        :(($([:(getfield(x, $f)) for f in ex]...),))
-    end
-    :(IndexedTables.ProjFn(x -> $tup))
-end
-
-pick(fld) = Proj{fld}()
 
 # lexicographic order product iterator
 
