@@ -279,6 +279,17 @@ end
 
 Base.@pure colnames(t::AbstractIndexedTable) = fieldnames(eltype(t))
 columns(t::NextTable) = columns(t.columns)
+# throw a better error message when a custom array
+# of different size is used
+function column(t::NextTable, a::AbstractArray)
+    if length(t) != length(a)
+        throw(ArgumentError(
+                "vector provided must have the same length as table"
+             )
+        )
+    end
+    column(rows(t), a)
+end
 
 Base.eltype(::Type{NextTable{C}}) where {C} = eltype(C)
 Base.eltype(t::NextTable) = eltype(typeof(t))

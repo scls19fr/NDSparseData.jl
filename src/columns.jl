@@ -459,7 +459,7 @@ column(c, x) = columns(c)[colindex(c, x)]
 end
 
 column(t, a::AbstractArray) = a
-column(t, a::Pair{Symbol, <:AbstractArray}) = a[2]
+column(t, a::Pair{Symbol, <:AbstractArray}) = column(t, a[2])
 column(t, a::Pair{Symbol, <:Pair}) = rows(t, a[2]) # renaming a selection
 column(t, a::Pair{<:Any, <:Any}) = map(a[2], rows(t, a[1]))
 

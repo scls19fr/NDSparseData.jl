@@ -739,6 +739,7 @@ end
 
     @test groupreduce(min, a, select=3) == a
     @test groupreduce(min, b, select=3) == renamecol(b, :c, :min)
+    @test_throws ArgumentError groupreduce(+, b, [:x, :y]) # issue JuliaDB.jl#100
     t = table([1, 1, 1, 2, 2, 2], [1, 1, 2, 2, 1, 1], [1, 2, 3, 4, 5, 6], names=[:x, :y, :z], pkey=(:x, :y))
     @test groupreduce(+, t, :x, select=:z) == table([1, 2], [6, 15], names=Symbol[:x, :+])
     @test groupreduce(((x, y)->if x isa Int
