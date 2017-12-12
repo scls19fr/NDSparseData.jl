@@ -396,6 +396,15 @@ end
     @test_throws ArgumentError t[[2,1]]
 end
 
+@testset "view & range" begin
+    @test table(1:10) == table(collect(1:10))
+    t = table(1:10, copy=false)
+    @test columns(t, 1) == 1:10
+    v = collect(1:10)
+    t = view(table(v), 1:2)
+    @test columns(t, 1) == view(v, 1:2)
+end
+
 @testset "sortpermby" begin
     cs = Columns(x=[1,1,2,1,2], y=[1,2,2,1,2], z=[7,6,5,4,3])
     t = table(cs, copy=false, pkey=[:x, :y])
