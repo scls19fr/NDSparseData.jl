@@ -558,6 +558,9 @@ end
     @test join(l, r) == table([1, 1], [1, 2], [1, 2], [2, 3], names=Symbol[:a, :b, :c, :d])
     @test join(l, r, how=:left) == table([1, 1, 2, 2], [1, 2, 1, 2], [1, 2, 3, 4], DataValueArray([2, 3, NA, NA]), names=Symbol[:a, :b, :c, :d])
     @test join(l, r, how=:outer) == table([0, 1, 1, 2, 2, 3], [1, 1, 2, 1, 2, 2], DataValueArray([NA, 1, 2, 3, 4, NA]), DataValueArray([1, 2, 3, NA, NA, 4]), names=Symbol[:a, :b, :c, :d])
+    a = table([1],[2], names=[:x,:y])
+    b = table([1],[3], names=[:a,:b])
+    @test join(a, b, lkey=:x,rkey=:a) == table([1],[2],[3], names=[:x,:y,:b]) # issue JuliaDB.jl#105
     @test join(l, r, how=:anti) == table([2, 2], [1, 2], [3, 4], names=Symbol[:a, :b, :c])
     l1 = table([1, 2, 2, 3], [1, 2, 3, 4], names=[:x, :y])
     r1 = table([2, 2, 3, 3], [5, 6, 7, 8], names=[:x, :z])

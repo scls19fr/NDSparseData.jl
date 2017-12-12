@@ -387,7 +387,7 @@ function Base.join(f, left::Dataset, right::Dataset;
                    lselect=isa(left, NDSparse) ?
                        valuenames(left) : excludecols(left, lkey),
                    rselect=isa(right, NDSparse) ?
-                       valuenames(right) : excludecols(right, lkey),
+                       valuenames(right) : excludecols(right, rkey),
                    name = nothing,
                    keepkeys=false, # defaults to keeping the keys for only the joined columns
                    init_group=nothing,
