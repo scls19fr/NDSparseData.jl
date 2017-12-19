@@ -293,7 +293,12 @@ end
 
 Base.eltype(::Type{NextTable{C}}) where {C} = eltype(C)
 Base.eltype(t::NextTable) = eltype(typeof(t))
-Base.copy(t::NextTable) = NextTable(t)
+Base.copy(t::NextTable) = table(t, copy=true)
+function Base.empty!(t::NextTable)
+    empty!(t.perms)
+    empty!(rows(t))
+    t
+end
 Base.:(==)(a::NextTable, b::NextTable) = rows(a) == rows(b)
 
 Base.getindex(t::NextTable, i::Integer) = getindex(t.columns, i)
