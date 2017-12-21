@@ -27,7 +27,7 @@ function sortpermby(t, by; cache=false)
     if !isa(by, Tuple)
         by = (by,)
     end
-    canonorder = colindex(t, by)
+    canonorder = map((x, y)->y isa Pair ? 0 : x, colindex(t, by), by)
     canonorder_vec = Int[canonorder...]
     perms = permcache(t)
     matched_cols, partial_perm = best_perm_estimate(perms, canonorder_vec)
