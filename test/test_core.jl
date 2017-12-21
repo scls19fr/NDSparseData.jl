@@ -107,8 +107,8 @@ let a = NDSparse([1,2,2,2], [1,2,3,4], [10,9,8,7])
     @test a[1,1] == 10
     @test a[2,3] == 8
     #@test_throws ErrorException a[2]
-    @test a[2,:] == NDSparse([2,2,2], [2,3,4], [9,8,7])
-    @test a[:,1] == NDSparse([1], [1], [10])
+    @test a[2,:] == NDSparse([2,3,4], [9,8,7])
+    @test a[:,1] == NDSparse([1], [10])
     @test collect(where(a, 2, :)) == [9,8,7]
     @test collect(pairs(a)) == [(1,1)=>10, (2,2)=>9, (2,3)=>8, (2,4)=>7]
     @test first(pairs(a, :, 3)) == ((2,3)=>8)
@@ -249,7 +249,7 @@ let x = Columns([6,5,4,3,2,2,1],[4,4,4,4,4,4,4],[1,2,3,4,5,6,7])
 end
 
 let x = NDSparse([1,2],[3,4],[:a,:b],[3,5])
-    @test x[1,:,:a] == NDSparse([1],[3],[:a],[3])
+    @test x[1,:,:a] == NDSparse([3],[3])
 end
 
 # issue #42
@@ -258,7 +258,6 @@ let hitemps = NDSparse([fill("New York",3); fill("Boston",3)],
                            repmat(Date(2016,7,6):Date(2016,7,8), 2),
                            [91,89,91,95,83,76])
     @test hitemps[:, Date(2016,7,8)] == NDSparse(["New York", "Boston"],
-                                                     fill(Date(2016,7,8), 2),
                                                      [91,76])
 end
 
@@ -340,7 +339,7 @@ end
     x = ndsparse((["a", "b"], [3, 4]), ([5, 6], [7.0, 8.0]))
     x = ndsparse(@NT(x = ["a", "a", "b"], y = [3, 4, 4]), @NT(p = [5, 6, 7], q = [8.0, 9.0, 10.0]))
     @test (keytype(x), eltype(x)) == (Tuple{String,Int64}, NamedTuples._NT_p_q{Int64,Float64})
-    @test x["a", :] == ndsparse(@NT(x = ["a", "a"], y = [3, 4]), Columns(@NT(p = [5, 6], q = [8.0, 9.0])))
+    @test x["a", :] == ndsparse(@NT(y = [3, 4]), Columns(@NT(p = [5, 6], q = [8.0, 9.0])))
 
     x = ndsparse([1, 2], [3, 4])
     @test pkeynames(x) == (1,)
