@@ -502,8 +502,31 @@ end
     @test pushcol(t, :z, [1 // 2, 3 // 4]) == table([0.01, 0.05], [2, 1], [3, 4], [1//2, 3//4], names=Symbol[:t, :x, :y, :z])
     t = table([0.01, 0.05], [2, 1], [3, 4], names=[:t, :x, :y], pkey=(:x,:y))
     @test popcol(t, :y) == table([0.05, 0.01,], [1, 2], names=Symbol[:t, :x])
+    @test pushcol(t, :z, [1 // 2, 3 // 4]) == table([0.01, 0.05], [2, 1], [3, 4], [1//2, 3//4], names=Symbol[:t, :x, :y, :z])
+
     # 99
     @test popcol(t, :y).pkey == [2]
+
+    # "Copy-on write"
+    t = table([1,2,3], [4,5,6], names=[:x,:y], pkey=:x)
+    tcopy = copy(t)
+    @test column(pushcol(t, :z, [7,8,9]), :x) === column(t, :x)
+    @test t == tcopy
+
+    @test column(setcol(t, :y, [7,8,9]), :x) === column(t, :x)
+    @test t == tcopy
+
+    # seting or popping an index column causes copy
+    t2 = setcol(t, :x, [9,8,7])
+    @test column(t2, :y) !== column(t, :y)
+    @test t == tcopy
+    @test t2 == table([7,8,9], [6,5,4], names=[:x, :y])
+
+    t2 = popcol(t, :x)
+    @test column(t2, :y) !== column(t, :y)
+    @test t == tcopy
+    @test t2 == table([4,5,6], names=[:y])
+
     t = table([0.01, 0.05], [2, 1], [3, 4], names=[:t, :x, :y], pkey=:t)
     @test insertcol(t, 2, :w, [0, 1]) == table([0.01, 0.05], [0, 1], [2, 1], [3, 4], names=Symbol[:t, :w, :x, :y])
     t = table([0.01, 0.05], [2, 1], [3, 4], names=[:t, :x, :y], pkey=:t)

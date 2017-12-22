@@ -345,11 +345,16 @@ function Base.getindex(d::ColDict{<:AbstractIndexedTable}, key::Tuple)
     table(d.src, columns=columns(t, key), pkey=pkey)
 end
 
-ColDict(t::AbstractIndexedTable) = ColDict(copy(t.pkey), t,
-                                copy(colnames(t)), Any[columns(t)...])
+function ColDict(t::AbstractIndexedTable; copy=nothing)
+    ColDict(Base.copy(t.pkey), t,
+            Base.copy(colnames(t)), Any[columns(t)...], copy)
+end
 
 function Base.getindex(d::ColDict{<:AbstractIndexedTable})
-    table(d.columns...; names=d.names, pkey=d.pkey)
+    table(d.columns...;
+          names=d.names,
+          copy=d.copy === nothing ? false : d.copy,
+          pkey=d.pkey)
 end
 
 subtable(t::Union{Columns, NextTable}, r) = t[r]

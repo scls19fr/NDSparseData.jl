@@ -561,11 +561,12 @@ concat_cols(xs, ys) = rows(concat_tup(_cols(xs), _cols(ys)))
 
 ## Mutable Columns Dictionary
 
-struct ColDict{T}
+mutable struct ColDict{T}
     pkey::Vector{Int}
     src::T
     names::Vector
     columns::Vector
+    copy::Union{Void, Bool}
 end
 
 """
@@ -576,7 +577,9 @@ Create a mutable dictionary of columns in `t`.
 To get the immutable iterator of the same type as `t`
 call `d[]`
 """
-ColDict(t) = ColDict(Int[], t, copy(colnames(t)), Any[columns(t)...])
+function ColDict(t; copy=nothing)
+    ColDict(Int[], t, Base.copy(colnames(t)), Any[columns(t)...], copy)
+end
 
 function Base.getindex(d::ColDict{<:Columns})
     Columns(d.columns...; names=d.names)
@@ -590,6 +593,13 @@ function Base.setindex!(d::ColDict, x, key::Union{Symbol, Int})
     if k == 0
         push!(d.columns, key)
         push!(d.columns, col)
+    elseif k in d.pkey
+        # primary key column has been modified.
+        # copy the table as this results in a shuffle
+        if d.copy === nothing
+            d.copy = true
+        end
+        d.columns[k] = col
     else
         d.columns[k] = col
     end
@@ -644,6 +654,10 @@ function Base.pop!(d::ColDict, key=length(s.names))
             if d.pkey[i] > k
                 d.pkey[i] -= 1
             end
+        end
+        if !isempty(idx) && d.copy === nothing
+            # set copy to true
+            d.copy = true
         end
     end
     col
