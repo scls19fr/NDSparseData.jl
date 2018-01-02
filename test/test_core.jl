@@ -500,12 +500,12 @@ end
     @test t2 == table([0.05, 0.1], [2,1], [4,3], names=[:t,:x,:y])
     t = table([0.01, 0.05], [2, 1], [3, 4], names=[:t, :x, :y], pkey=:t)
     @test pushcol(t, :z, [1 // 2, 3 // 4]) == table([0.01, 0.05], [2, 1], [3, 4], [1//2, 3//4], names=Symbol[:t, :x, :y, :z])
-    t = table([0.01, 0.05], [2, 1], [3, 4], names=[:t, :x, :y], pkey=(:x,:y))
-    @test popcol(t, :y) == table([0.05, 0.01,], [1, 2], names=Symbol[:t, :x])
+    t = table([0.01, 0.05], [2, 1], [3, 4], names=[:t, :x, :y], pkey=(:t,:x))
+    @test popcol(t, :t) == table([1, 2], [4,3], names=Symbol[:x, :y])
     @test pushcol(t, :z, [1 // 2, 3 // 4]) == table([0.01, 0.05], [2, 1], [3, 4], [1//2, 3//4], names=Symbol[:t, :x, :y, :z])
 
     # 99
-    @test popcol(t, :y).pkey == [2]
+    @test popcol(t, :x).pkey == [1]
 
     # "Copy-on write"
     t = table([1,2,3], [4,5,6], names=[:x,:y], pkey=:x)
