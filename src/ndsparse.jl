@@ -166,10 +166,10 @@ function ndsparse(::Val{:serial}, ks::Tup, vs::Union{Tup, AbstractVector};
     I = rows(ks)
     d = vs isa Tup ? Columns(vs) : vs
 
-    if !isempty(filter(x->!isa(x, Int),
-                       intersect(colnames(I), colnames(d))))
-        error("All column names, including index and data columns, must be distinct")
-    end
+   #if !isempty(filter(x->!isa(x, Int),
+   #                   intersect(colnames(I), colnames(d))))
+   #    error("All column names, including index and data columns, must be distinct")
+   #end
     length(I) == length(d) || error("index and data must have the same number of elements")
 
     if !presorted && !issorted(I)
@@ -508,6 +508,17 @@ end
 # NDSparse uses lex order, Base arrays use colex order, so we need to
 # reorder the data. transpose and permutedims are used for this.
 convert(::Type{NDSparse}, m::SparseMatrixCSC) = NDSparse(findnz(m.')[[2,1,3]]..., presorted=true)
+
+# special method to allow selection on
+# ndsparse with repeating names in keys and values
+function column(x::NDSparse, which::Integer)
+    @assert which > 0
+    if which <= ndims(x)
+        keys(x, which)
+    else
+        values(x, which-ndims(x))
+    end
+end
 
 function convert{T}(::Type{NDSparse}, a::AbstractArray{T})
     n = length(a)
