@@ -28,6 +28,7 @@ import Base: tail
 range_estimate(col, idx) = 1:length(col)
 range_estimate(col::AbstractVector{T}, idx::T) where {T} = searchsortedfirst(col, idx):searchsortedlast(col,idx)
 range_estimate(col, idx::AbstractArray) = searchsortedfirst(col,first(idx)):searchsortedlast(col,last(idx))
+range_estimate(col::Columns, idx::AbstractArray) = searchsortedfirst(col,first(idx)):searchsortedlast(col,last(idx))
 
 const _fwd = Base.Order.ForwardOrdering()
 
