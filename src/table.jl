@@ -548,7 +548,7 @@ function excludecols(t, cols)
             mask[i] = false
         end
     end
-    (ns[mask]...)
+    ((1:length(ns))[mask]...)
 end
 
 """

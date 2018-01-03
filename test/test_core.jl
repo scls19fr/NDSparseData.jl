@@ -310,9 +310,9 @@ end
     a = table(["a", "b"], [3, 4], pkey=1)
     @test pkeys(a) == Columns((["a", "b"],))
     t = table([2, 1], [1, 3], [4, 5], names=[:x, :y, :z], pkey=(1, 2))
-    @test excludecols(t, (:x,)) == (:y, :z)
-    @test excludecols(t, (2,)) == (:x, :z)
-    @test excludecols(t, pkeynames(t)) == (:z,)
+    @test excludecols(t, (:x,)) == (2, 3)
+    @test excludecols(t, (2,)) == (1, 3)
+    @test excludecols(t, pkeynames(t)) == (3,)
     @test excludecols([1, 2, 3], (1,)) == ()
     @test convert(NextTable, Columns(x=[1, 2], y=[3, 4]), Columns(z=[1, 2]), presorted=true) == table([1, 2], [3, 4], [1, 2], names=Symbol[:x, :y, :z])
     @test colnames([1, 2, 3]) == [1]

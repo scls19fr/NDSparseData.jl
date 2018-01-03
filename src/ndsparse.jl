@@ -255,11 +255,7 @@ pkeynames(t::NDSparse) = (dimlabels(t)...)
 function valuenames(t::NDSparse)
     if isa(values(t), Columns)
         T = eltype(values(t))
-        if T<:NamedTuple
-            (fieldnames(T)...)
-        else
-            ((ndims(t) + (1:nfields(eltype(values(t)))))...)
-        end
+        ((ndims(t) + (1:nfields(eltype(values(t)))))...)
     else
         ndims(t) + 1
     end
