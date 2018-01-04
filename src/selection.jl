@@ -1,4 +1,4 @@
-export dropna, selectkeys, selectvalues, ApplyColwise, Not, Keys
+export dropna, selectkeys, selectvalues, Not, Keys
 
 """
 `select(t::Table, which::Selection)`
@@ -143,23 +143,6 @@ end
 function selectvalues(x::NDSparse, which; kwargs...)
     ndsparse(keys(x), rows(values(x), which); kwargs...)
 end
-
-struct ApplyColwise{N, T<:Tuple}
-    functions::T
-    names::NTuple{N, Symbol}
-end
-
-ApplyColwise(args...) = ApplyColwise(args)
-ApplyColwise(t::Tuple) = ApplyColwise(t, map(Symbol,t))
-
-function (ac::ApplyColwise)(t::Union{AbstractIndexedTable, Columns})
-    func = Tuple(Symbol(s, :_, n) => s => f for s in colnames(t),
-        (f, n) in zip(ac.functions, ac.names))
-    fs, input, S = init_inputs(func, t, reduced_type, true)
-    _apply(fs, fs isa Tup ? columns(input) : input)
-end
-
-(ac::ApplyColwise)(t) = (ac::ApplyColwise)(convert(Columns, t))
 
 struct Not{T}
     names::T
