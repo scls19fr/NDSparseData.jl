@@ -586,12 +586,13 @@ function Base.getindex(d::ColDict{<:Columns})
 end
 
 Base.getindex(d::ColDict, key) = rows(d[], key)
+Base.getindex(d::ColDict, key::AbstractArray) = key
 
 function Base.setindex!(d::ColDict, x, key::Union{Symbol, Int})
     k = _colindex(d.names, key, 0)
     col = d[x]
     if k == 0
-        push!(d.columns, key)
+        push!(d.names, key)
         push!(d.columns, col)
     elseif k in d.pkey
         # primary key column has been modified.

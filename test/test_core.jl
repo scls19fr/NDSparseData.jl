@@ -937,3 +937,11 @@ end
     @test groupby(identity, t, (:x, :y), select=:z, flatten = true) == renamecol(t, :z, :identity)
     @test groupby(identity, t, (:x, :y), select=:z, flatten = true).pkey == [1,2]
 end
+
+@testset "ColDict" begin
+    t = table([1], names=[:x1])
+    d = ColDict(t)
+    d[:x2] = [2]
+    d[:x3] = :x2 => -
+    @test d[] == table([1], [2], [-2], names=[:x1,:x2,:x3])
+end
