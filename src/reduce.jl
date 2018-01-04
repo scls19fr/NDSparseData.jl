@@ -413,18 +413,21 @@ end
 ApplyColwise(args...) = ApplyColwise(args)
 ApplyColwise(t::Tuple) = ApplyColwise(t, map(Symbol,t))
 
-function (ac::ApplyColwise)(t::Union{AbstractIndexedTable, Columns, AbstractVector})
-    if t isa AbstractVector
-        func = Tuple(Symbol(n) => f for (f, n) in zip(ac.functions, ac.names))
-    else
-        func = Tuple(Symbol(s, :_, n) => s => f for s in colnames(t),
-            (f, n) in zip(ac.functions, ac.names))
-    end
+function (ac::ApplyColwise)(t)
+    func = init_func(ac, t)
     fs, input, S = init_inputs(func, t, reduced_type, true)
     _apply(fs, fs isa Tup ? columns(input) : input)
 end
 
-(ac::ApplyColwise)(t::AbstractVector{<:Tup}) = (ac::ApplyColwise)(convert(Columns, t))
+(ac::ApplyColwise)(t::Columns) = (ac::ApplyColwise)(table(t, copy = false, presorted = true))
+(ac::ApplyColwise)(t::AbstractVector{<:Tup}) =
+    (ac::ApplyColwise)(convert(Columns, t))
+
+init_func(ac::ApplyColwise, t::AbstractVector) =
+    Tuple(Symbol(n) => f for (f, n) in zip(ac.functions, ac.names))
+
+init_func(ac::ApplyColwise, t::AbstractIndexedTable) =
+    Tuple(Symbol(s, :_, n) => s => f for s in colnames(t), (f, n) in zip(ac.functions, ac.names))
 
 Base.@deprecate aggregate(f, t;
                           by=pkeynames(t),
