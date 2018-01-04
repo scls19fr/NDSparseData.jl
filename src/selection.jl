@@ -1,4 +1,4 @@
-export dropna, selectkeys, selectvalues
+export dropna, selectkeys, selectvalues, ApplyColwise, Not, Keys
 
 """
 `select(t::Table, which::Selection)`
@@ -142,6 +142,39 @@ end
 
 function selectvalues(x::NDSparse, which; kwargs...)
     ndsparse(keys(x), rows(values(x), which); kwargs...)
+end
+
+struct ApplyColwise{N, T<:Tuple}
+    functions::T
+    names::NTuple{N, Symbol}
+end
+
+ApplyColwise(args...) = ApplyColwise(args)
+ApplyColwise(t::Tuple) = ApplyColwise(t, map(Symbol,t))
+
+function (ac::ApplyColwise)(t::Union{AbstractIndexedTable, Columns})
+    func = Tuple(Symbol(s, :_, n) => s => f for s in colnames(t),
+        (f, n) in zip(ac.functions, ac.names))
+    fs, input, S = init_inputs(func, t, reduced_type, true)
+    _apply(fs, fs isa Tup ? columns(input) : input)
+end
+
+(ac::ApplyColwise)(t) = (ac::ApplyColwise)(convert(Columns, t))
+
+struct Not{T}
+    names::T
+end
+
+Not(args...) = Not(args)
+
+for f in [:(Base.select), :columns, :rows, :excludecols]
+    @eval $f(t::AbstractIndexedTable, not::Not) = $f(t, excludecols(t, not.names))
+end
+
+struct Keys; end
+
+for f in [:(Base.select), :columns, :rows, :excludecols]
+    @eval $f(t::AbstractIndexedTable, keys::Keys) = $f(t, pkeynames(t))
 end
 
 """
