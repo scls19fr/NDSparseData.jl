@@ -1,5 +1,5 @@
 using OnlineStats
-export groupreduce, groupby, aggregate, aggregate_vec, ApplyColwise
+export groupreduce, groupby, aggregate, aggregate_vec, summarize
 
 """
 `reduce(f, t::Table; select::Selection)`
@@ -381,10 +381,13 @@ function groupby(f, t::Dataset, by=pkeynames(t); select=valuenames(t), flatten=f
         by = (by,)
     end
 
+    fs, input, S = init_inputs(f, data, reduced_type, true)
+
+    by == () && return _apply(fs, fs isa Tup ? columns(input) : input)
+
     key  = rows(t, by)
 
     perm = sortpermby(t, by)
-    fs, input, S = init_inputs(f, data, reduced_type, true)
     # Note: we're not using S here, we'll let _groupby figure it out
     dest_key, dest_data = _groupby(fs, key, input, perm)
 
@@ -394,7 +397,7 @@ function groupby(f, t::Dataset, by=pkeynames(t); select=valuenames(t), flatten=f
 end
 
 """
-A callable type to apply functions columnswise to a table. Returns a `NamedTuple`.
+A callable type to apply functions column-wise to a table. Returns a `NamedTuple`.
 
 # Examples
 
@@ -412,6 +415,7 @@ end
 
 ApplyColwise(args...) = ApplyColwise(args)
 ApplyColwise(t::Tuple) = ApplyColwise(t, map(Symbol,t))
+ApplyColwise(t::NamedTuple) = ApplyColwise(Tuple(values(t)), Tuple(keys(t)))
 
 function (ac::ApplyColwise)(t)
     func = init_func(ac, t)
@@ -426,8 +430,15 @@ end
 init_func(ac::ApplyColwise, t::AbstractVector) =
     Tuple(Symbol(n) => f for (f, n) in zip(ac.functions, ac.names))
 
-init_func(ac::ApplyColwise, t::AbstractIndexedTable) =
+init_func(ac::ApplyColwise, t::Union{AbstractIndexedTable, Columns}) =
     Tuple(Symbol(s, :_, n) => s => f for s in colnames(t), (f, n) in zip(ac.functions, ac.names))
+
+function summarize(f, t, by = pkeynames(t); select = excludecols(t, by))
+    ac = ApplyColwise(f)
+    func = init_func(ac, rows(t, select))
+    groupby(func, t, by, select = select)
+end
+
 
 Base.@deprecate aggregate(f, t;
                           by=pkeynames(t),
