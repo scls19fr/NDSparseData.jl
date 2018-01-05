@@ -828,14 +828,16 @@ end
                         NDSparse([1, 1], [2, 3], Columns(maxv=[4, 5], minv=[1, 0]))
 end
 
-@testset "colwise" begin
+@testset "summarize" begin
     a = table([1,3,5], [2,2,2], names = [:x, :y])
-    @test ApplyColwise(mean, std)(a) ==
+    @test summarize((mean, std), a) ==
         @NT(x_mean = 3.0, y_mean = 2.0, x_std = 2.0, y_std = 0.0)
-    @test ApplyColwise(mean, std)(collect(a)) == ApplyColwise(mean, std)(a)
-    @test ApplyColwise(mean, std)([1,2,3]) == @NT(mean = 2.0, std = 1.0)
-    @test ApplyColwise((mean, std), (:m, :s))(a) ==
+    @test summarize((mean, std), a, select = :x) == @NT(mean = 3.0, std = 2.0)
+    @test summarize(@NT(m = mean, s = std), a) ==
         @NT(x_m = 3.0, y_m = 2.0, x_s = 2.0, y_s = 0.0)
+    b = table(["a","a","b","b"], [1,3,5,7], [2,2,2,2], names = [:x, :y, :z], pkey = :x)
+    @test summarize(mean, b) ==
+        table(["a","b"], [2.0,6.0], [2.0,2.0], names = [:x, :y_mean, :z_mean], pkey = :x)
 end
 
 @testset "select" begin

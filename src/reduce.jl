@@ -396,18 +396,6 @@ function groupby(f, t::Dataset, by=pkeynames(t); select=valuenames(t), flatten=f
         IndexedTables.flatten(t, length(columns(t))) : t
 end
 
-"""
-A callable type to apply functions column-wise to a table. Returns a `NamedTuple`.
-
-# Examples
-
-```jldoctest colwise
-julia> t = table([1, 2, 3], [1, 1, 1], names = [:x, :y]);
-
-julia> ApplyColwise(mean, std)(t)
-(x_mean = 2.0, y_mean = 1.0, x_std = 1.0, y_std = 0.0)
-```
-"""
 struct ApplyColwise{N, T<:Tuple}
     functions::T
     names::NTuple{N, Symbol}
@@ -417,22 +405,51 @@ ApplyColwise(args...) = ApplyColwise(args)
 ApplyColwise(t::Tuple) = ApplyColwise(t, map(Symbol,t))
 ApplyColwise(t::NamedTuple) = ApplyColwise(Tuple(values(t)), Tuple(keys(t)))
 
-function (ac::ApplyColwise)(t)
-    func = init_func(ac, t)
-    fs, input, S = init_inputs(func, t, reduced_type, true)
-    _apply(fs, fs isa Tup ? columns(input) : input)
-end
-
-(ac::ApplyColwise)(t::Columns) = (ac::ApplyColwise)(table(t, copy = false, presorted = true))
-(ac::ApplyColwise)(t::AbstractVector{<:Tup}) =
-    (ac::ApplyColwise)(convert(Columns, t))
-
 init_func(ac::ApplyColwise, t::AbstractVector) =
     Tuple(Symbol(n) => f for (f, n) in zip(ac.functions, ac.names))
 
 init_func(ac::ApplyColwise, t::Union{AbstractIndexedTable, Columns}) =
     Tuple(Symbol(s, :_, n) => s => f for s in colnames(t), (f, n) in zip(ac.functions, ac.names))
 
+"""
+`summarize(f, t, by = pkeynames(t); select = excludecols(t, by))`
+
+Apply summary functions column-wise to a table. Return a `NamedTuple` in the non-grouped case
+and a table in the grouped case.
+
+# Examples
+
+```jldoctest colwise
+julia> t = table([1, 2, 3], [1, 1, 1], names = [:x, :y]);
+
+julia> summarize((mean, std), t)
+(x_mean = 2.0, y_mean = 1.0, x_std = 1.0, y_std = 0.0)
+
+julia> s = table(["a","a","b","b"], [1,3,5,7], [2,2,2,2], names = [:x, :y, :z], pkey = :x);
+
+julia> summarize(mean, s)
+Table with 2 rows, 3 columns:
+x    y_mean  z_mean
+───────────────────
+"a"  2.0     2.0
+"b"  6.0     2.0
+```
+
+Use a `NamedTuple` to have different names for the summary functions:
+
+```jldoctest colwise
+julia> summarize(@NT(m = mean, s = std), t)
+(x_m = 2.0, y_m = 1.0, x_s = 1.0, y_s = 0.0)
+```
+
+Use `select` to only summarize some columns:
+
+```jldoctest colwise
+julia> summarize(@NT(m = mean, s = std), t, select = :x)
+(m = 2.0, s = 1.0)
+```
+
+"""
 function summarize(f, t, by = pkeynames(t); select = excludecols(t, by))
     ac = ApplyColwise(f)
     func = init_func(ac, rows(t, select))
