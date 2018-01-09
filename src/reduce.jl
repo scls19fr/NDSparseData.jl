@@ -408,7 +408,10 @@ ApplyColwise(t::NamedTuple) = ApplyColwise(Tuple(values(t)), Tuple(keys(t)))
 init_func(ac::ApplyColwise, t::AbstractVector) =
     Tuple(Symbol(n) => f for (f, n) in zip(ac.functions, ac.names))
 
-init_func(ac::ApplyColwise, t::Union{AbstractIndexedTable, Columns}) =
+init_func(ac::ApplyColwise, t::Union{AbstractIndexedTable, Columns}) = _init_func(ac::ApplyColwise, t)
+
+# small refactor to avoid code duplication in JuliaDB:
+_init_func(ac::ApplyColwise, t) = 
     Tuple(Symbol(s, :_, n) => s => f for s in colnames(t), (f, n) in zip(ac.functions, ac.names))
 
 """
