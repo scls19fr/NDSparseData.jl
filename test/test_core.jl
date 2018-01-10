@@ -950,6 +950,11 @@ end
     @test groupby(identity, t, (:x, :y), select=:z, flatten = true).pkey == [1,2]
 end
 
+@testset "stack" begin
+    
+
+end
+
 @testset "ColDict" begin
     t = table([1], names=[:x1])
     d = ColDict(t)
