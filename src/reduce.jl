@@ -396,23 +396,22 @@ function groupby(f, t::Dataset, by=pkeynames(t); select=valuenames(t), flatten=f
         IndexedTables.flatten(t, length(columns(t))) : t
 end
 
-struct ApplyColwise{N, T<:Tuple}
+struct ApplyColwise{T}
     functions::T
-    names::NTuple{N, Symbol}
+    names::Vector{Symbol}
 end
 
-ApplyColwise(args...) = ApplyColwise(args)
-ApplyColwise(t::Tuple) = ApplyColwise(t, map(Symbol,t))
-ApplyColwise(t::NamedTuple) = ApplyColwise(Tuple(values(t)), Tuple(keys(t)))
+ApplyColwise(f) = ApplyColwise(f, Symbol[])
+ApplyColwise(t::Tuple) = ApplyColwise(t, [map(Symbol,t)...])
+ApplyColwise(t::NamedTuple) = ApplyColwise(Tuple(values(t)), keys(t))
 
-init_func(ac::ApplyColwise, t::AbstractVector) =
+init_func(ac::ApplyColwise{<:Tuple}, t::AbstractVector) =
     Tuple(Symbol(n) => f for (f, n) in zip(ac.functions, ac.names))
-
-init_func(ac::ApplyColwise, t::Union{AbstractIndexedTable, Columns}) = _init_func(ac::ApplyColwise, t)
-
-# small refactor to avoid code duplication in JuliaDB:
-_init_func(ac::ApplyColwise, t) = 
+init_func(ac::ApplyColwise{<:Tuple}, t::Columns) =
     Tuple(Symbol(s, :_, n) => s => f for s in colnames(t), (f, n) in zip(ac.functions, ac.names))
+init_func(ac::ApplyColwise, t::Columns) =
+    Tuple(s => s => ac.functions for s in colnames(t))
+init_func(ac::ApplyColwise, t::AbstractVector) = ac.functions
 
 """
 `summarize(f, t, by = pkeynames(t); select = excludecols(t, by))`
@@ -432,10 +431,10 @@ julia> s = table(["a","a","b","b"], [1,3,5,7], [2,2,2,2], names = [:x, :y, :z], 
 
 julia> summarize(mean, s)
 Table with 2 rows, 3 columns:
-x    y_mean  z_mean
-───────────────────
-"a"  2.0     2.0
-"b"  6.0     2.0
+x    y    z
+─────────────
+"a"  2.0  2.0
+"b"  6.0  2.0
 ```
 
 Use a `NamedTuple` to have different names for the summary functions:
@@ -453,7 +452,7 @@ julia> summarize(@NT(m = mean, s = std), t, select = :x)
 ```
 
 """
-function summarize(f, t, by = pkeynames(t); select = excludecols(t, by))
+function summarize(f, t::Dataset, by = pkeynames(t); select = t isa NDSparse ? valuenames(t) : excludecols(t, by))
     ac = ApplyColwise(f)
     func = init_func(ac, rows(t, select))
     groupby(func, t, by, select = select)

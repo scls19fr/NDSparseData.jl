@@ -837,7 +837,7 @@ end
         @NT(x_m = 3.0, y_m = 2.0, x_s = 2.0, y_s = 0.0)
     b = table(["a","a","b","b"], [1,3,5,7], [2,2,2,2], names = [:x, :y, :z], pkey = :x)
     @test summarize(mean, b) ==
-        table(["a","b"], [2.0,6.0], [2.0,2.0], names = [:x, :y_mean, :z_mean], pkey = :x)
+        table(["a","b"], [2.0,6.0], [2.0,2.0], names = [:x, :y, :z], pkey = :x)
 end
 
 @testset "select" begin
