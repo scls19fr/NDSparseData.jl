@@ -51,6 +51,7 @@ include("selection.jl")
 include("reduce.jl")
 include("flatten.jl")
 include("join.jl")
+include("reshape.jl")
 
 # TableTraits.jl integration
 include("tabletraits.jl")
