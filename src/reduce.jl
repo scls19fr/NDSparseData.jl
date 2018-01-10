@@ -370,6 +370,7 @@ x  normy
 function groupby end
 function groupby(f, t::Dataset, by=pkeynames(t); select=valuenames(t), flatten=false)
     data = rows(t, select)
+    f = init_func(f, data)
     # we want to try and keep the column names
     if typeof(t)<:NextTable &&
         !isa(f, Tup) &&
@@ -452,10 +453,8 @@ julia> summarize(@NT(m = mean, s = std), t, select = :x)
 ```
 
 """
-function summarize(f, t::Dataset, by = pkeynames(t); select = t isa NDSparse ? valuenames(t) : excludecols(t, by))
-    ac = ApplyColwise(f)
-    func = init_func(ac, rows(t, select))
-    groupby(func, t, by, select = select)
+function summarize(f, t, by = pkeynames(t); select = t isa NDSparse ? valuenames(t) : excludecols(t, by))
+    groupby(ApplyColwise(f), t, by, select = select)
 end
 
 
