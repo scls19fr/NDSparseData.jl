@@ -453,7 +453,7 @@ julia> summarize(@NT(m = mean, s = std), t, select = :x)
 ```
 
 """
-function summarize(f, t, by = pkeynames(t); select = t isa NDSparse ? valuenames(t) : excludecols(t, by))
+function summarize(f, t, by = pkeynames(t); select = t isa AbstractIndexedTable ? excludecols(t, by) : valuenames(t))
     groupby(ApplyColwise(f), t, by, select = select)
 end
 
