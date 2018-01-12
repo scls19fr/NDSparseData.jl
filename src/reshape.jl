@@ -1,4 +1,4 @@
-export stack
+export stack, unstack
 
 """
     `stack(t, by = pkeynames(t); select = excludecols(t, by), value = :value, variable = :variable)`
@@ -37,4 +37,23 @@ function stack(t::NextTable, by = pkeynames(t); select = excludecols(t, by), val
     
     bycols = map(arg -> repeat(arg, inner = length(valuecols)), columns(t, by))
     convert(NextTable, Columns(bycols), Columns(labelcol, valuecol, names = [variable, value]))
+end
+
+function unstack(::Type{T}, key, val, cols) where {T}
+    dest_val = Columns((DataValues.DataValueArray{T}(length(val)) for i in cols)...; names = cols)
+    for (i, el) in enumerate(val)
+        for j in el
+            k, v = j
+            isnull(columns(dest_val, k)[i]) || error("Repeated values with same label are not allowed")
+            columns(dest_val, k)[i] = v
+        end
+    end
+    convert(NextTable, key, dest_val)
+end
+
+function unstack(t::NextTable, by = pkeynames(t); variable = :variable, value = :value)
+    tgrp = groupby((value => identity,), t, by, select = (variable, value))
+    cols = union(columns(t, variable))
+    T = eltype(columns(t, value))
+    unstack(T isa Type{<:DataValue} ? eltype(T) : T, pkeys(tgrp), columns(tgrp, value), cols)
 end
