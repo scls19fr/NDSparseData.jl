@@ -1,7 +1,7 @@
 export stack, unstack
 
 """
-    `stack(t, by = pkeynames(t); select = excludecols(t, by), value = :value, variable = :variable)`
+    `stack(t, by = pkeynames(t); select = excludecols(t, by), variable = :variable, value = :value)`
 
 Reshape a table from the wide to the long format. Columns in `by` are kept as indexing columns.
 Columns in `select` are stacked. In addition to the id columns, two additional columns labeled `variable` and `value`
@@ -26,8 +26,8 @@ x  variable  value
 4  :xcube    64
 ```
 """
-function stack(t::NextTable, by = pkeynames(t); select = excludecols(t, by), value = :value, variable = :variable)
-    (by != pkeynames(t)) && return stack(reindex(t, by, select); value = value, variable = variable)    
+function stack(t::NextTable, by = pkeynames(t); select = excludecols(t, by), variable = :variable, value = :value)
+    (by != pkeynames(t)) && return stack(reindex(t, by, select); variable = :variable, value = :value)    
 
     valuecols = columns(t, select)
     valuecol = vec([valuecol[i] for valuecol in valuecols, i in 1:length(t)])
@@ -51,6 +51,41 @@ function unstack(::Type{T}, key, val, cols) where {T}
     convert(NextTable, key, dest_val)
 end
 
+"""
+    `unstack(t, by = pkeynames(t); variable = :variable, value = :value)`
+
+Reshape a table from the long to the wide format. Columns in `by` are kept as indexing columns.
+Keyword arguments `variable` and `value` denote which column contains the column identifier and
+which the corresponding values.
+
+## Examples
+
+```jldoctest unstack
+julia> t = table(1:4, [1, 4, 9, 16], [1, 8, 27, 64], names = [:x, :xsquare, :xcube], pkey = :x);
+
+julia> long = stack(t)
+Table with 8 rows, 3 columns:
+x  variable  value
+──────────────────
+1  :xsquare  1
+1  :xcube    1
+2  :xsquare  4
+2  :xcube    8
+3  :xsquare  9
+3  :xcube    27
+4  :xsquare  16
+4  :xcube    64
+
+julia> unstack(long)
+Table with 4 rows, 3 columns:
+x  xsquare  xcube
+─────────────────
+1  1        1
+2  4        8
+3  9        27
+4  16       64
+```
+"""
 function unstack(t::NextTable, by = pkeynames(t); variable = :variable, value = :value)
     tgrp = groupby((value => identity,), t, by, select = (variable, value))
     cols = union(columns(t, variable))

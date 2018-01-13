@@ -840,6 +840,18 @@ end
         table(["a","b"], [2.0,6.0], [2.0,2.0], names = [:x, :y, :z], pkey = :x)
 end
 
+@testset "reshape" begin
+    t = table(1:4, [1, 4, 9, 16], [1, 8, 27, 64], names = [:x, :xsquare, :xcube], pkey = :x)
+    wide = stack(t; variable = :var, value = :val)
+    @test wide == table([1, 1, 2, 2, 3, 3, 4, 4],
+                        [:xsquare, :xcube, :xsquare, :xcube, :xsquare, :xcube, :xsquare, :xcube],
+                        [1, 1, 4, 8, 9, 27, 16, 64];
+                        names = [:x, :var, :val], pkey = :x)
+    @test unstack(wide; variable = :var, value = :val) == t
+    t1 = table([1, 1, 1, 2, 2], [:x, :x, :y, :x, :y], [1, 2, 3, 4, 5], names = [:x, :variable, :value])
+    @test_throws Exception unstack(t1, :x)
+end
+
 @testset "select" begin
     a = table([12,21,32], [52,41,34], [11,53,150], pkey=[1,2])
     b = table([12,23,32], [52,43,34], [56,13,10], pkey=[1,2])
@@ -948,11 +960,6 @@ end
     t=table([1,1,1,2,2,2], [1,1,2,1,1,2], [1,2,3,4,5,6], names=[:x,:y,:z], pkey=[1,2]);
     @test groupby(identity, t, (:x, :y), select=:z, flatten = true) == renamecol(t, :z, :identity)
     @test groupby(identity, t, (:x, :y), select=:z, flatten = true).pkey == [1,2]
-end
-
-@testset "stack" begin
-    
-
 end
 
 @testset "ColDict" begin
