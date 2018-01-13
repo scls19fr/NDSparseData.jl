@@ -30,10 +30,10 @@ function stack(t::NextTable, by = pkeynames(t); select = excludecols(t, by), var
     (by != pkeynames(t)) && return stack(reindex(t, by, select); variable = :variable, value = :value)    
 
     valuecols = columns(t, select)
-    valuecol = vec([valuecol[i] for valuecol in valuecols, i in 1:length(t)])
+    valuecol = [valuecol[i] for i in 1:length(t) for valuecol in valuecols]
 
     labels = fieldnames(valuecols)
-    labelcol = vec([label for label in labels, i in 1:length(t)])
+    labelcol = [label for i in 1:length(t) for label in labels]
     
     bycols = map(arg -> repeat(arg, inner = length(valuecols)), columns(t, by))
     convert(NextTable, Columns(bycols), Columns(labelcol, valuecol, names = [variable, value]))
