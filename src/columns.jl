@@ -908,14 +908,14 @@ renamecol(t, name, newname) = @cols rename!(t, name, newname)
 
 using OnlineStats
 
-@inline _apply(f::Series, g, x) = (fit!(g, x); g)
+@inline _apply(f::OnlineStats.AbstractSeries, g, x) = (fit!(g, x); g)
 @inline _apply(f::Tup, y::Tup, x::Tup) = map(_apply, f, y, x)
 @inline _apply(f, y, x) = f(y, x)
 @inline _apply(f::Tup, x::Tup) = map(_apply, f, x)
 @inline _apply(f, x) = f(x)
 
 @inline init_first(f, x) = x
-@inline init_first(f::Series, x) = (g=copy(f); fit!(g, x); g)
+@inline init_first(f::OnlineStats.AbstractSeries, x) = (g=copy(f); fit!(g, x); g)
 @inline init_first(f::Tup, x::Tup) = map(init_first, f, x)
 
 # Initialize type of output, functions to apply, input and output vectors
@@ -936,7 +936,7 @@ end
 
 nicename(f) = Symbol(f)
 nicename(o::OnlineStat) = Symbol(typeof(o).name.name)
-function nicename(s::Series)
+function nicename(s::OnlineStats.AbstractSeries)
     Symbol(join(map(x -> x.name.name,
                     typeof(s).parameters[2].parameters), :_))
 end
