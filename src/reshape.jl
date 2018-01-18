@@ -1,7 +1,7 @@
 export stack, unstack
 
 """
-    `stack(t, by = pkeynames(t); select = excludecols(t, by), variable = :variable, value = :value)`
+`stack(t, by = pkeynames(t); select = excludecols(t, by), variable = :variable, value = :value)`
 
 Reshape a table from the wide to the long format. Columns in `by` are kept as indexing columns.
 Columns in `select` are stacked. In addition to the id columns, two additional columns labeled `variable` and `value`
@@ -29,14 +29,14 @@ x  variable  value
 function stack(t::D, by = pkeynames(t); select = isa(t, NDSparse) ? valuenames(t) : excludecols(t, by),
     variable = :variable, value = :value) where {D<:Dataset}
 
-    (by != pkeynames(t)) && return stack(reindex(t, by, select); variable = :variable, value = :value)    
+    (by != pkeynames(t)) && return stack(reindex(t, by, select); variable = :variable, value = :value)
 
     valuecols = columns(t, select)
     valuecol = [valuecol[i] for i in 1:length(t) for valuecol in valuecols]
 
     labels = fieldnames(valuecols)
     labelcol = [label for i in 1:length(t) for label in labels]
-    
+
     bycols = map(arg -> repeat(arg, inner = length(valuecols)), columns(t, by))
     convert(collectiontype(D), Columns(bycols), Columns(labelcol, valuecol, names = [variable, value]))
 end
@@ -54,7 +54,7 @@ function unstack(::Type{D}, ::Type{T}, key, val, cols) where {D <:Dataset, T}
 end
 
 """
-    `unstack(t, by = pkeynames(t); variable = :variable, value = :value)`
+`unstack(t, by = pkeynames(t); variable = :variable, value = :value)`
 
 Reshape a table from the long to the wide format. Columns in `by` are kept as indexing columns.
 Keyword arguments `variable` and `value` denote which column contains the column identifier and
