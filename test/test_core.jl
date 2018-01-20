@@ -841,6 +841,22 @@ end
         table(["a","b"], [2.0,6.0], [2.0,2.0], names = [:x, :y, :z], pkey = :x)
 end
 
+@testset "reshape" begin
+    t = table(1:4, [1, 4, 9, 16], [1, 8, 27, 64], names = [:x, :xsquare, :xcube], pkey = :x)
+    tsparse = IndexedTables._convert(NDSparse, t)
+    long = stack(t; variable = :var, value = :val)
+    longsparse = stack(tsparse; variable = :var, value = :val)
+    @test long == table([1, 1, 2, 2, 3, 3, 4, 4],
+                        [:xsquare, :xcube, :xsquare, :xcube, :xsquare, :xcube, :xsquare, :xcube],
+                        [1, 1, 4, 8, 9, 27, 16, 64];
+                        names = [:x, :var, :val], pkey = :x)
+    @test longsparse == IndexedTables._convert(NDSparse, long)
+    @test unstack(long; variable = :var, value = :val) == t
+    @test unstack(longsparse; variable = :var, value = :val) == tsparse
+    t1 = table([1, 1, 1, 2, 2], [:x, :x, :y, :x, :y], [1, 2, 3, 4, 5], names = [:x, :variable, :value])
+    @test_throws Exception unstack(t1, :x)
+end
+
 @testset "select" begin
     a = table([12,21,32], [52,41,34], [11,53,150], pkey=[1,2])
     b = table([12,23,32], [52,43,34], [56,13,10], pkey=[1,2])
